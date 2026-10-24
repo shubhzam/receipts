@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { healthResponseSchema, type HealthResponse } from "@receipts/shared";
-import { config } from "@/config";
+import { apiFetch } from "@/api";
 
 type State =
   | { kind: "loading" }
@@ -10,7 +10,7 @@ type State =
   | { kind: "loaded"; health: HealthResponse };
 
 async function fetchHealth(): Promise<HealthResponse> {
-  const res = await fetch(`${config.apiUrl}/health`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+  const res = await apiFetch("/health", { cache: "no-store", signal: AbortSignal.timeout(8000) });
   // 503 carries the same body shape as 200, so parse regardless of status
   return healthResponseSchema.parse(await res.json());
 }

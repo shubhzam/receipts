@@ -1,14 +1,18 @@
+import cors from "cors";
 import express from "express";
 import { config } from "./config.js";
 import { runHealthChecks } from "./health.js";
 
 const app = express();
 
-// health is public and read-only, the web app on another origin reads it
-app.use((_req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", config.corsOrigin);
-  next();
-});
+// the web app lives on another origin, cors handles preflight options too
+app.use(
+  cors({
+    origin: config.corsOrigin,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "ngrok-skip-browser-warning"],
+  }),
+);
 
 app.get("/health", async (_req, res) => {
   const body = await runHealthChecks();
