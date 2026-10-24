@@ -1,9 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { hasCardLikeDigits, intakeSchema } from "@receipts/shared";
 import { caseTemplates } from "../seed/cases.js";
 import { canTransition } from "./state.js";
 import { newToken, previewFor } from "./service.js";
-import { moneyToCents, paidCents } from "./webhook.js";
+import { realPaymentSucceeded } from "./fixtures/payment-succeeded.js";
+import { findOrder, moneyToCents, paidCents, paymentEventSchema } from "./webhook.js";
+
+const { findUnique, findFirst } = vi.hoisted(() => ({ findUnique: vi.fn(), findFirst: vi.fn() }));
+vi.mock("../db.js", () => ({ prisma: { order: { findUnique, findFirst } } }));
+
+const parsedData = (over: Record<string, unknown>) => paymentEventSchema.parse({ type: "payment.succeeded", data: { ...realPaymentSucceeded.data, ...over } }).data;
 
 const d07 = caseTemplates.find((c) => c.key === "d07")!;
 const d02 = caseTemplates.find((c) => c.key === "d02")!;
@@ -64,5 +70,56 @@ describe("paid amount", () => {
     const base = { id: "pay_1", metadata: null };
     expect(paidCents({ ...base, total: { amount: "29.00", currency: "usd" } })).toBe(2900);
     expect(paidCents({ ...base, total: { amount: "29.00", currency: "eur" } })).toBeNull();
+  });
+});
+
+describe("real payment.succeeded shape", () => {
+  const parsed = () => paymentEventSchema.parse(realPaymentSucceeded);
+
+  it("parses the body whop actually sends, with amounts as dollar numbers", () => {
+    const event = parsed();
+    expect(event.type).toBe("payment.succeeded");
+    expect(event.data.id).toBe("pay_TESTTESTTESTTE");
+    expect(event.data.metadata?.orderId).toBe("01a16f8f-0000-7000-8000-000000000001");
+    expect(event.data.checkout_configuration_id).toBe("ch_TESTTESTTESTTES");
+  });
+
+  it("reads 29.0 dollars as 2900 cents", () => {
+    expect(paidCents(parsed().data)).toBe(2900);
+  });
+
+  it("still reads sdk style money objects and strings", () => {
+    const base = { id: "pay_1" };
+    expect(paidCents({ ...base, usd_total: { amount: "29.00", currency: "usd" } })).toBe(2900);
+    expect(paidCents({ ...base, usd_total: "29.00" })).toBe(2900);
+    expect(paidCents({ ...base, total: 28.5, currency: "usd" })).toBe(2850);
+  });
+
+  it("refuses a total in another currency", () => {
+    expect(paidCents({ id: "pay_1", total: 29.0, currency: "eur" })).toBeNull();
+  });
+});
+
+describe("matching the order", () => {
+  const order = { id: "o1", whopCheckoutId: "ch_TESTTESTTESTTES" };
+
+  it("uses metadata first and falls back to the checkout configuration id", async () => {
+    findUnique.mockResolvedValueOnce(order);
+    expect((await findOrder(parsedData({ metadata: { orderId: "o1" } })))?.id).toBe("o1");
+
+    findUnique.mockResolvedValueOnce(null);
+    findFirst.mockResolvedValueOnce(order);
+    const viaCheckout = await findOrder(parsedData({ metadata: { orderId: "gone" } }));
+    expect(viaCheckout?.id).toBe("o1");
+    expect(findFirst).toHaveBeenCalledWith({ where: { whopCheckoutId: "ch_TESTTESTTESTTES" } });
+
+    findFirst.mockResolvedValueOnce(order);
+    expect((await findOrder(parsedData({ metadata: null })))?.id).toBe("o1");
+  });
+
+  it("returns nothing when neither link matches", async () => {
+    findUnique.mockResolvedValueOnce(null);
+    findFirst.mockResolvedValueOnce(null);
+    expect(await findOrder(parsedData({}))).toBeNull();
   });
 });

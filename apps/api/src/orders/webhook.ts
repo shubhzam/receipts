@@ -7,32 +7,65 @@ import { recordEvent } from "./events.js";
 import { enqueueFulfill } from "./queue.js";
 import { transition } from "./state.js";
 
-const money = z.object({ amount: z.string(), currency: z.string() }).nullish();
+// the real payment.succeeded body sends amounts as plain dollar numbers (29.0), the sdk types say money objects, take both
+const moneyObject = z.object({ amount: z.string(), currency: z.string() });
+const amountField = z.union([z.number(), z.string(), moneyObject]).nullish();
 
-const paymentEventSchema = z.object({
+export const paymentEventSchema = z.object({
   type: z.string(),
   data: z.object({
     id: z.string(),
     metadata: z.record(z.string(), z.unknown()).nullish(),
-    total: money,
-    usd_total: money,
+    checkout_configuration_id: z.string().nullish(),
+    currency: z.string().nullish(),
+    total: amountField,
+    usd_total: amountField,
   }),
 });
 
 // "29.00" to 2900, null when the string is not a plain decimal
-export function moneyToCents(amount: string): number | null {
-  const match = /^(\d+)(?:\.(\d+))?$/.exec(amount.trim());
+export function moneyToCents(decimal: string): number | null {
+  const match = /^(\d+)(?:\.(\d+))?$/.exec(decimal.trim());
   if (!match) return null;
   const fraction = Math.round(Number(`0.${match[2] ?? "0"}`) * 100);
   return Number(match[1]) * 100 + fraction;
 }
 
 type PaymentData = z.infer<typeof paymentEventSchema>["data"];
+type Amount = z.infer<typeof amountField>;
 
-// usd only, a charge in another currency cannot be compared to our price
+// a bare number or string is in major units, an object carries its own currency
+function amountToCents(value: Amount): { cents: number; currency: string | null } | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? { cents: Math.round(value * 100), currency: null } : null;
+  if (typeof value === "string") {
+    const cents = moneyToCents(value);
+    return cents === null ? null : { cents, currency: null };
+  }
+  const cents = moneyToCents(value.amount);
+  return cents === null ? null : { cents, currency: value.currency.toLowerCase() };
+}
+
+// usd_total is already converted to usd, total only counts when the payment itself is in usd
 export function paidCents(data: PaymentData): number | null {
-  const paid = [data.usd_total, data.total].find((m) => m && m.currency.toLowerCase() === "usd");
-  return paid ? moneyToCents(paid.amount) : null;
+  const usd = amountToCents(data.usd_total);
+  if (usd && (usd.currency === null || usd.currency === "usd")) return usd.cents;
+  const total = amountToCents(data.total);
+  const currency = total?.currency ?? data.currency?.toLowerCase() ?? null;
+  return total && currency === "usd" ? total.cents : null;
+}
+
+// metadata is the primary link, the checkout configuration id we stored is the fallback
+export async function findOrder(data: PaymentData) {
+  const orderId = typeof data.metadata?.orderId === "string" ? data.metadata.orderId : null;
+  if (orderId) {
+    const byId = await prisma.order.findUnique({ where: { id: orderId } });
+    if (byId) return byId;
+  }
+  if (data.checkout_configuration_id) {
+    return prisma.order.findFirst({ where: { whopCheckoutId: data.checkout_configuration_id } });
+  }
+  return null;
 }
 
 // a repeat attempt stays quiet on success, the job id already guarantees one job per order
@@ -47,8 +80,7 @@ async function enqueueAndRecord(orderId: string, repeat = false): Promise<void> 
 }
 
 export async function handlePaymentSucceeded(data: PaymentData): Promise<void> {
-  const orderId = typeof data.metadata?.orderId === "string" ? data.metadata.orderId : null;
-  const order = orderId ? await prisma.order.findUnique({ where: { id: orderId } }) : null;
+  const order = await findOrder(data);
   if (!order) {
     await recordEvent(null, "payment_ignored", "a payment arrived for an order we do not know, nothing was changed.");
     return;
@@ -106,7 +138,9 @@ webhookRouter.post("/whop", raw({ type: "*/*", limit: "1mb" }), (req: Request, r
     const parsed = paymentEventSchema.safeParse(payload);
     if (parsed.success && parsed.data.type === "payment.succeeded") await handlePaymentSucceeded(parsed.data.data);
     else if (!parsed.success && (payload as { type?: unknown })?.type === "payment.succeeded") {
-      await recordEvent(null, "payment_ignored", "a payment event arrived in a shape we do not recognise, nothing was changed.");
+      // field paths only, values can hold personal data
+      const paths = [...new Set(parsed.error.issues.map((issue) => issue.path.join(".")))].join(", ");
+      await recordEvent(null, "payment_ignored", `a payment event arrived in a shape we do not recognise (fields: ${paths}), nothing was changed.`);
     }
     res.status(200).json({ ok: true });
   })().catch(next);
