@@ -2,7 +2,8 @@ import "dotenv/config";
 import { z } from "zod";
 
 const envSchema = z.object({
-  PORT: z.coerce.number().int().positive(),
+  PORT: z.coerce.number().int().positive().default(4000),
+  CORS_ORIGIN: z.string().min(1).default("*"),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
   WHOP_API_KEY: z.string().min(1),
@@ -16,6 +17,7 @@ const envSchema = z.object({
 
 export class Config {
   readonly port: number;
+  readonly corsOrigin: string;
   readonly databaseUrl: string;
   readonly redisUrl: string;
   readonly whopApiKey: string;
@@ -28,6 +30,7 @@ export class Config {
 
   private constructor(env: z.infer<typeof envSchema>) {
     this.port = env.PORT;
+    this.corsOrigin = env.CORS_ORIGIN;
     this.databaseUrl = env.DATABASE_URL;
     this.redisUrl = env.REDIS_URL;
     this.whopApiKey = env.WHOP_API_KEY;

@@ -6,7 +6,7 @@ const app = express();
 
 // health is public and read-only, the web app on another origin reads it
 app.use((_req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", config.corsOrigin);
   next();
 });
 

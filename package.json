@@ -1,17 +1,14 @@
 {
   "name": "receipts",
   "private": true,
+  "packageManager": "pnpm@11.28.8",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck"
-  },
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.7.0",
-      "onFail": "download"
-    }
   },
   "type": "module",
   "devDependencies": {
