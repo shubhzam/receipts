@@ -59,7 +59,7 @@ function PreviewCard({ preview }: { preview: Preview }) {
   );
 }
 
-function BuyBox({ token, preview, reopen }: { token: string; preview: Preview; reopen: boolean }) {
+function BuyBox({ token, preview, reopen, testMode }: { token: string; preview: Preview; reopen: boolean; testMode: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +94,7 @@ function BuyBox({ token, preview, reopen }: { token: string; preview: Preview; r
       <p className="text-sm">
         {reopen ? "Your checkout is open. If you closed it, you can open it again." : `The written reply for this dispute costs ${formatDollars(config.priceCents)}.`}
       </p>
-      <p className="text-xs opacity-60">Test mode: checkout runs on the Whop sandbox, so only test cards work and no real money moves.</p>
+      {testMode ? <p className="text-xs opacity-60">Test mode: checkout runs on the Whop sandbox, so only test cards work and no real money moves.</p> : null}
       {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       <div>
         <button className={buttonClass} disabled={busy} onClick={() => void buy()}>
@@ -182,11 +182,11 @@ function OrderView({ token }: { token: string }) {
     <>
       {problem ? <p className="text-sm text-yellow-700 dark:text-yellow-400">{problem}</p> : null}
       {order.status === "fulfilled" ? <Result order={order} /> : <PreviewCard preview={order.preview} />}
-      {order.status === "draft" ? <BuyBox token={token} preview={order.preview} reopen={false} /> : null}
+      {order.status === "draft" ? <BuyBox token={token} preview={order.preview} reopen={false} testMode={order.testMode} /> : null}
       {order.status === "pending_payment" ? (
         <>
           <Waiting text="Waiting for payment confirmation. This page updates by itself once the payment lands." />
-          <BuyBox token={token} preview={order.preview} reopen />
+          <BuyBox token={token} preview={order.preview} reopen testMode={order.testMode} />
         </>
       ) : null}
       {order.status === "paid" ? <Waiting text="Payment confirmed. We are writing and checking your reply, this takes under a minute." /> : null}

@@ -33,6 +33,8 @@ export class Config {
   readonly redisUrl: string;
   readonly whopApiKey: string;
   readonly whopBaseUrl: string;
+  // true while checkout points at the whop sandbox, derived so it can never disagree with the base url
+  readonly whopTestMode: boolean;
   readonly whopApiVersionDate: string;
   readonly whopAccountId: string;
   readonly whopWebhookSecret: string;
@@ -56,6 +58,7 @@ export class Config {
     this.redisUrl = env.REDIS_URL;
     this.whopApiKey = env.WHOP_API_KEY;
     this.whopBaseUrl = env.WHOP_BASE_URL;
+    this.whopTestMode = new URL(env.WHOP_BASE_URL).hostname.startsWith("sandbox");
     this.whopApiVersionDate = env.WHOP_API_VERSION_DATE;
     this.whopAccountId = env.WHOP_ACCOUNT_ID;
     this.whopWebhookSecret = env.WHOP_WEBHOOK_SECRET;

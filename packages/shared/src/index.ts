@@ -210,6 +210,8 @@ export const orderResponseSchema = z.object({
   status: orderStatusSchema,
   preview: previewSchema,
   result: orderResultSchema.optional(),
+  // true while checkout runs on the whop sandbox
+  testMode: z.boolean(),
 });
 export type OrderResponse = z.infer<typeof orderResponseSchema>;
 

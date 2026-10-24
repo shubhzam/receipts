@@ -40,7 +40,7 @@ export async function getOrderView(token: string): Promise<OrderResponse> {
   const order = await prisma.order.findUnique({ where: { token } });
   if (!order) throw new HttpError(404, "NOT_FOUND", "order not found");
   const status = order.status as OrderResponse["status"];
-  const view: OrderResponse = { status, preview: order.preview as Preview };
+  const view: OrderResponse = { status, preview: order.preview as Preview, testMode: config.whopTestMode };
   if (status === "fulfilled" && order.result) view.result = order.result as OrderResponse["result"];
   return view;
 }
