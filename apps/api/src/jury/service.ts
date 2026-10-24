@@ -1,10 +1,12 @@
 import { Redis } from "ioredis";
 import type { AssignmentResponse, CaseView, VoteRequest, VoteResponse } from "@receipts/shared";
+import type { Assignment } from "../generated/prisma/client.js";
 import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { reasonLabels } from "../seed/cases.js";
 import { buildCheck, isCheckCorrect } from "./check.js";
 import { HttpError } from "./errors.js";
+import { pickCaseIds } from "./rotation.js";
 
 // fail fast when redis is down so the assignment returns 503 instead of hanging
 const redis = new Redis(config.redisUrl, { maxRetriesPerRequest: 1, enableOfflineQueue: false });
@@ -20,40 +22,63 @@ async function findOpenStudy(studyKey: string) {
   return study;
 }
 
-async function nextCaseId(studyKey: string): Promise<string> {
+async function nextCaseIds(studyKey: string, perParticipant: number): Promise<string[]> {
   const cases = await prisma.case.findMany({ orderBy: { key: "asc" }, select: { id: true } });
   if (cases.length === 0) throw new HttpError(503, "ASSIGNMENT_UNAVAILABLE", "no cases seeded");
-  let counter: number;
+  const count = Math.min(perParticipant, cases.length);
+  let endSlot: number;
   try {
-    counter = await redis.incr(roundRobinKey(studyKey));
+    endSlot = await redis.incrby(roundRobinKey(studyKey), count);
   } catch (err) {
     console.error(`assignment counter failed: ${err instanceof Error ? err.message : err}`);
     throw new HttpError(503, "ASSIGNMENT_UNAVAILABLE", "assignment is unavailable, reload in a minute");
   }
-  return cases[(counter - 1) % cases.length]!.id;
+  return pickCaseIds(
+    cases.map((row) => row.id),
+    endSlot,
+    count,
+  );
+}
+
+async function caseKeysOf(caseIds: string[]): Promise<string[]> {
+  const rows = await prisma.case.findMany({ where: { id: { in: caseIds } }, select: { id: true, key: true } });
+  const keyById = new Map(rows.map((row) => [row.id, row.key]));
+  return caseIds.map((id) => keyById.get(id)!);
+}
+
+function redirectUrlFor(teracSubmissionId: string): string {
+  const url = new URL(config.teracCallbackUrl);
+  url.searchParams.set("teracSubmissionId", teracSubmissionId);
+  url.searchParams.set("result", "completed");
+  return url.toString();
+}
+
+async function describeAssignment(assignment: Assignment): Promise<AssignmentResponse> {
+  const votes = await prisma.vote.findMany({ where: { assignmentId: assignment.id }, select: { caseId: true } });
+  const answered = new Set(votes.map((vote) => vote.caseId));
+  const caseKeys = await caseKeysOf(assignment.caseIds);
+  return {
+    caseKeys,
+    answeredCaseKeys: caseKeys.filter((_, i) => answered.has(assignment.caseIds[i]!)),
+    redirectUrl: answered.size >= assignment.caseIds.length ? redirectUrlFor(assignment.teracSubmissionId) : null,
+  };
 }
 
 export async function assign(studyKey: string, teracSubmissionId: string): Promise<AssignmentResponse> {
   const study = await findOpenStudy(studyKey);
   const existing = await prisma.assignment.findUnique({ where: { teracSubmissionId } });
-  if (existing) return { caseKey: await caseKeyOf(existing.caseId) };
+  if (existing) return describeAssignment(existing);
   if (study.status === "closed") throw new HttpError(409, "STUDY_CLOSED", "this study is closed");
 
-  const caseId = await nextCaseId(studyKey);
+  const caseIds = await nextCaseIds(studyKey, study.casesPerParticipant);
   try {
-    const created = await prisma.assignment.create({ data: { studyId: study.id, caseId, teracSubmissionId } });
-    return { caseKey: await caseKeyOf(created.caseId) };
+    return await describeAssignment(await prisma.assignment.create({ data: { studyId: study.id, caseIds, teracSubmissionId } }));
   } catch (err) {
-    // a concurrent request for the same submission won the unique insert, return its case
+    // a concurrent request for the same submission won the unique insert, return its list
     const winner = await prisma.assignment.findUnique({ where: { teracSubmissionId } });
-    if (winner) return { caseKey: await caseKeyOf(winner.caseId) };
+    if (winner) return describeAssignment(winner);
     throw err;
   }
-}
-
-async function caseKeyOf(caseId: string): Promise<string> {
-  const row = await prisma.case.findUniqueOrThrow({ where: { id: caseId }, select: { key: true } });
-  return row.key;
 }
 
 export async function getCaseView(caseKey: string, studyKey: string): Promise<CaseView> {
@@ -74,30 +99,41 @@ export async function getCaseView(caseKey: string, studyKey: string): Promise<Ca
   };
 }
 
-function redirectUrlFor(teracSubmissionId: string): string {
-  const url = new URL(config.teracCallbackUrl);
-  url.searchParams.set("teracSubmissionId", teracSubmissionId);
-  url.searchParams.set("result", "completed");
-  return url.toString();
-}
-
 export async function castVote(input: VoteRequest): Promise<{ created: boolean; body: VoteResponse }> {
   const study = await findOpenStudy(input.studyKey);
   const assignment = await prisma.assignment.findUnique({ where: { teracSubmissionId: input.teracSubmissionId } });
   if (!assignment || assignment.studyId !== study.id) {
     throw new HttpError(409, "NO_ASSIGNMENT", "no assignment for this submission");
   }
-  const body = { redirectUrl: redirectUrlFor(input.teracSubmissionId) };
-  const existing = await prisma.vote.findUnique({ where: { assignmentId: assignment.id } });
-  if (existing) return { created: false, body };
+  const caseRow = await prisma.case.findUnique({ where: { key: input.caseKey } });
+  if (!caseRow || !assignment.caseIds.includes(caseRow.id)) {
+    throw new HttpError(409, "CASE_NOT_ASSIGNED", `case ${input.caseKey} is not part of this assignment`);
+  }
 
-  const caseRow = await prisma.case.findUniqueOrThrow({ where: { id: assignment.caseId } });
+  const created = await insertVote(input, study.id, assignment.id, caseRow);
+  const answered = await prisma.vote.count({ where: { assignmentId: assignment.id } });
+  const total = assignment.caseIds.length;
+  return {
+    created,
+    body: { answered, total, redirectUrl: answered >= total ? redirectUrlFor(input.teracSubmissionId) : null },
+  };
+}
+
+// the unique assignment and case pair keeps a double click down to one vote
+async function insertVote(
+  input: VoteRequest,
+  studyId: string,
+  assignmentId: string,
+  caseRow: { id: string; amountCents: number },
+): Promise<boolean> {
+  const existing = await prisma.vote.findUnique({ where: { assignmentId_caseId: { assignmentId, caseId: caseRow.id } } });
+  if (existing) return false;
   try {
     await prisma.vote.create({
       data: {
-        assignmentId: assignment.id,
-        studyId: study.id,
-        caseId: assignment.caseId,
+        assignmentId,
+        studyId,
+        caseId: caseRow.id,
         merchantWins: input.merchantWins,
         confidence: input.confidence,
         weaknessTags: input.weaknessTags,
@@ -105,11 +141,10 @@ export async function castVote(input: VoteRequest): Promise<{ created: boolean; 
         checkPassed: isCheckCorrect(caseRow.amountCents, input.checkAnswer),
       },
     });
+    return true;
   } catch (err) {
-    // a double click raced past the existence check, the unique assignment id keeps one vote
-    const winner = await prisma.vote.findUnique({ where: { assignmentId: assignment.id } });
-    if (winner) return { created: false, body };
+    const winner = await prisma.vote.findUnique({ where: { assignmentId_caseId: { assignmentId, caseId: caseRow.id } } });
+    if (winner) return false;
     throw err;
   }
-  return { created: true, body };
 }

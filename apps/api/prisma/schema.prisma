@@ -36,29 +36,30 @@ model Reply {
 }
 
 model Study {
-  id                 String    @id @default(uuid(7))
-  key                String    @unique
-  round              String
-  replyVersion       String
-  targetVotesPerCase Int
-  teracOpportunityId String?   @unique
-  status             String
-  launchedAt         DateTime?
+  id                  String    @id @default(uuid(7))
+  key                 String    @unique
+  round               String
+  replyVersion        String
+  targetVotesPerCase  Int
+  casesPerParticipant Int       @default(1)
+  teracOpportunityId  String?   @unique
+  status              String
+  launchedAt          DateTime?
 }
 
 model Assignment {
   id                String   @id @default(uuid(7))
   studyId           String
-  caseId            String
+  caseIds           String[]
   teracSubmissionId String   @unique
   createdAt         DateTime @default(now())
 
-  @@index([studyId, caseId])
+  @@index([studyId])
 }
 
 model Vote {
   id           String   @id @default(uuid(7))
-  assignmentId String   @unique
+  assignmentId String
   studyId      String
   caseId       String
   merchantWins Boolean
@@ -68,5 +69,6 @@ model Vote {
   checkPassed  Boolean
   createdAt    DateTime @default(now())
 
+  @@unique([assignmentId, caseId])
   @@index([studyId, caseId])
 }

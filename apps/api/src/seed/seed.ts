@@ -31,18 +31,20 @@ async function seedReply(llm: LlmClient, template: CaseTemplate, caseId: string)
   console.log(`case ${template.key}: wrote ${REPLY_VERSION} reply`);
 }
 
+// votes per case is the ceiling of the planned total spread over the cases
+function plannedVotesPerCase(): number {
+  return Math.ceil((config.juryParticipants * config.juryCasesPerParticipant) / caseTemplates.length);
+}
+
 async function seedStudy(): Promise<void> {
+  const plan = { targetVotesPerCase: plannedVotesPerCase(), casesPerParticipant: config.juryCasesPerParticipant };
   await prisma.study.upsert({
     where: { key: STUDY_KEY },
-    create: {
-      key: STUDY_KEY,
-      round: "baseline",
-      replyVersion: REPLY_VERSION,
-      targetVotesPerCase: config.juryVotesPerCase,
-      status: "draft",
-    },
+    create: { key: STUDY_KEY, round: "baseline", replyVersion: REPLY_VERSION, status: "draft", ...plan },
     update: {},
   });
+  // only a draft study follows the config, a launched one keeps the plan it launched with
+  await prisma.study.updateMany({ where: { key: STUDY_KEY, status: "draft" }, data: plan });
 }
 
 export async function runSeed(llm: LlmClient): Promise<void> {

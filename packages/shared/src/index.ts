@@ -45,7 +45,12 @@ export const assignmentRequestSchema = z.object({
 });
 export type AssignmentRequest = z.infer<typeof assignmentRequestSchema>;
 
-export const assignmentResponseSchema = z.object({ caseKey: z.string() });
+// caseKeys is the ordered list this participant walks, answered lets a reopened link resume
+export const assignmentResponseSchema = z.object({
+  caseKeys: z.array(z.string()),
+  answeredCaseKeys: z.array(z.string()),
+  redirectUrl: z.string().nullable(),
+});
 export type AssignmentResponse = z.infer<typeof assignmentResponseSchema>;
 
 export const caseViewSchema = z.object({
@@ -64,6 +69,7 @@ export type CaseView = z.infer<typeof caseViewSchema>;
 export const voteRequestSchema = z.object({
   studyKey: z.string().min(1),
   teracSubmissionId: z.string().min(1),
+  caseKey: z.string().min(1),
   merchantWins: z.boolean(),
   confidence: z.number().int().min(1).max(7),
   weaknessTags: z.array(weaknessTagSchema),
@@ -72,5 +78,10 @@ export const voteRequestSchema = z.object({
 });
 export type VoteRequest = z.infer<typeof voteRequestSchema>;
 
-export const voteResponseSchema = z.object({ redirectUrl: z.string() });
+// redirectUrl is only set once the last case of the assignment is answered
+export const voteResponseSchema = z.object({
+  answered: z.number().int(),
+  total: z.number().int(),
+  redirectUrl: z.string().nullable(),
+});
 export type VoteResponse = z.infer<typeof voteResponseSchema>;

@@ -1,16 +1,18 @@
 "use client";
 
 import { Suspense, use, useEffect, useState, type FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   caseViewSchema,
   errorResponseSchema,
   voteResponseSchema,
   weaknessTags,
   type CaseView,
+  type VoteResponse,
   type WeaknessTag,
 } from "@receipts/shared";
 import { apiFetch } from "@/api";
+import { DoneNotice } from "../done-notice";
 
 const tagLabels: Record<WeaknessTag, string> = {
   no_proof_of_use: "no proof the customer used it",
@@ -21,8 +23,6 @@ const tagLabels: Record<WeaknessTag, string> = {
   tone: "tone of the reply",
   nothing_weak: "nothing was weak",
 };
-
-const AUTO_REDIRECT_MS = 2500;
 
 async function fetchCase(caseKey: string, study: string): Promise<CaseView> {
   const res = await apiFetch(`/jury/cases/${caseKey}?study=${encodeURIComponent(study)}`, { cache: "no-store" });
@@ -38,13 +38,14 @@ type VoteForm = {
   checkAnswer: string;
 };
 
-async function submitVote(study: string, sid: string, form: VoteForm): Promise<string> {
+async function submitVote(study: string, sid: string, caseKey: string, form: VoteForm): Promise<VoteResponse> {
   const res = await apiFetch("/jury/votes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       studyKey: study,
       teracSubmissionId: sid,
+      caseKey,
       merchantWins: form.merchantWins,
       confidence: form.confidence,
       weaknessTags: form.tags,
@@ -57,7 +58,7 @@ async function submitVote(study: string, sid: string, form: VoteForm): Promise<s
     const parsed = errorResponseSchema.safeParse(body);
     throw new Error(parsed.success ? parsed.data.error.message : "could not save your vote");
   }
-  return voteResponseSchema.parse(body).redirectUrl;
+  return voteResponseSchema.parse(body);
 }
 
 function dollars(cents: number): string {
@@ -66,9 +67,17 @@ function dollars(cents: number): string {
 
 function CaseBody({ caseParams }: { caseParams: Promise<{ caseKey: string }> }) {
   const { caseKey } = use(caseParams);
+  // the key remounts the form so every case starts with an empty vote
+  return <CaseForm key={caseKey} caseKey={caseKey} />;
+}
+
+function CaseForm({ caseKey }: { caseKey: string }) {
+  const router = useRouter();
   const params = useSearchParams();
   const study = params.get("study") ?? "";
   const sid = params.get("sid") ?? "";
+  const cases = (params.get("cases") ?? caseKey).split(",");
+  const position = Math.max(cases.indexOf(caseKey), 0) + 1;
   const [view, setView] = useState<CaseView | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [form, setForm] = useState<VoteForm>({ merchantWins: null, confidence: 4, tags: [], text: "", checkAnswer: "" });
@@ -82,11 +91,13 @@ function CaseBody({ caseParams }: { caseParams: Promise<{ caseKey: string }> }) 
       .catch((err: unknown) => setLoadError(err instanceof Error ? err.message : "please reload"));
   }, [caseKey, study]);
 
-  useEffect(() => {
-    if (!redirectUrl) return;
-    const timer = setTimeout(() => window.location.assign(redirectUrl), AUTO_REDIRECT_MS);
-    return () => clearTimeout(timer);
-  }, [redirectUrl]);
+  function goNext() {
+    const next = cases[position];
+    const query = `study=${encodeURIComponent(study)}&sid=${encodeURIComponent(sid)}&cases=${encodeURIComponent(cases.join(","))}`;
+    // no next case in the list means the entry page resumes from the saved votes
+    if (next) router.push(`/jury/${next}?${query}`);
+    else router.replace(`/jury?study=${encodeURIComponent(study)}&teracSubmissionId=${encodeURIComponent(sid)}`);
+  }
 
   function toggleTag(tag: WeaknessTag) {
     setForm((f) => ({ ...f, tags: f.tags.includes(tag) ? f.tags.filter((t) => t !== tag) : [...f.tags, tag] }));
@@ -101,7 +112,9 @@ function CaseBody({ caseParams }: { caseParams: Promise<{ caseKey: string }> }) 
     setSubmitting(true);
     setError(null);
     try {
-      setRedirectUrl(await submitVote(study, sid, form));
+      const result = await submitVote(study, sid, caseKey, form);
+      if (result.redirectUrl) setRedirectUrl(result.redirectUrl);
+      else goNext();
     } catch (err) {
       setError(err instanceof Error ? err.message : "could not save your vote");
       setSubmitting(false);
@@ -111,17 +124,7 @@ function CaseBody({ caseParams }: { caseParams: Promise<{ caseKey: string }> }) 
   if (loadError) return <p className="text-red-600">{loadError}</p>;
   if (!view) return <p>loading...</p>;
 
-  if (redirectUrl) {
-    return (
-      <div className="flex flex-col gap-3">
-        <p className="text-lg font-semibold">thank you, your vote is saved.</p>
-        <p>sending you back to Terac... if nothing happens, use the link below so you get paid.</p>
-        <a href={redirectUrl} className="rounded bg-black px-4 py-3 text-center text-white">
-          return to Terac
-        </a>
-      </div>
-    );
-  }
+  if (redirectUrl) return <DoneNotice redirectUrl={redirectUrl} />;
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6">
@@ -130,6 +133,9 @@ function CaseBody({ caseParams }: { caseParams: Promise<{ caseKey: string }> }) 
       </p>
 
       <section className="flex flex-col gap-2">
+        <p className="text-sm font-semibold opacity-60">
+          case {position} of {cases.length}
+        </p>
         <h1 className="text-xl font-semibold">
           {view.reasonLabel}, {dollars(view.amountCents)}
         </h1>
@@ -193,7 +199,7 @@ function CaseBody({ caseParams }: { caseParams: Promise<{ caseKey: string }> }) 
 
       {error ? <p className="text-red-600">{error}</p> : null}
       <button type="submit" disabled={submitting} className="rounded bg-black px-4 py-3 text-white disabled:opacity-50">
-        {submitting ? "saving..." : "submit my vote"}
+        {submitting ? "saving..." : position < cases.length ? "save and go to the next case" : "submit my last vote"}
       </button>
     </form>
   );

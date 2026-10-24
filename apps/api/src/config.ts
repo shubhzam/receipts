@@ -16,7 +16,8 @@ const envSchema = z.object({
   PUBLIC_WEB_URL: z.string().min(1),
   TERAC_CALLBACK_URL: z.string().min(1).default("https://terac.com/api/external/callback"),
   LLM_MODEL: z.string().min(1).default("claude-sonnet-5-5"),
-  JURY_VOTES_PER_CASE: z.coerce.number().int().positive().default(5),
+  JURY_PARTICIPANTS: z.coerce.number().int().positive().default(7),
+  JURY_CASES_PER_PARTICIPANT: z.coerce.number().int().positive().default(4),
 });
 
 export class Config {
@@ -34,7 +35,8 @@ export class Config {
   readonly publicWebUrl: string;
   readonly teracCallbackUrl: string;
   readonly llmModel: string;
-  readonly juryVotesPerCase: number;
+  readonly juryParticipants: number;
+  readonly juryCasesPerParticipant: number;
 
   private constructor(env: z.infer<typeof envSchema>) {
     this.port = env.PORT;
@@ -51,7 +53,8 @@ export class Config {
     this.publicWebUrl = env.PUBLIC_WEB_URL;
     this.teracCallbackUrl = env.TERAC_CALLBACK_URL;
     this.llmModel = env.LLM_MODEL;
-    this.juryVotesPerCase = env.JURY_VOTES_PER_CASE;
+    this.juryParticipants = env.JURY_PARTICIPANTS;
+    this.juryCasesPerParticipant = env.JURY_CASES_PER_PARTICIPANT;
   }
 
   // exits with the offending key names, never the values
