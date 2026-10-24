@@ -11,3 +11,62 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Case {
+  id                String   @id @default(uuid(7))
+  key               String   @unique
+  reason            String
+  amountCents       Int
+  claimText         String
+  factsJson         Json
+  merchantShouldWin Boolean
+  replies           Reply[]
+  createdAt         DateTime @default(now())
+}
+
+model Reply {
+  id      String @id @default(uuid(7))
+  caseId  String
+  case    Case   @relation(fields: [caseId], references: [id])
+  version String
+  text    String
+  model   String
+
+  @@unique([caseId, version])
+}
+
+model Study {
+  id                 String    @id @default(uuid(7))
+  key                String    @unique
+  round              String
+  replyVersion       String
+  targetVotesPerCase Int
+  teracOpportunityId String?   @unique
+  status             String
+  launchedAt         DateTime?
+}
+
+model Assignment {
+  id                String   @id @default(uuid(7))
+  studyId           String
+  caseId            String
+  teracSubmissionId String   @unique
+  createdAt         DateTime @default(now())
+
+  @@index([studyId, caseId])
+}
+
+model Vote {
+  id           String   @id @default(uuid(7))
+  assignmentId String   @unique
+  studyId      String
+  caseId       String
+  merchantWins Boolean
+  confidence   Int
+  weaknessTags String[]
+  weaknessText String?
+  checkPassed  Boolean
+  createdAt    DateTime @default(now())
+
+  @@index([studyId, caseId])
+}
