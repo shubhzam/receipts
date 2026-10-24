@@ -9,7 +9,9 @@
     "start": "tsx src/index.ts",
     "start:worker": "tsx src/worker.ts",
     "test": "vitest run",
-    "seed": "tsx src/seed/seed.ts"
+    "seed": "tsx src/seed/seed.ts",
+    "progress": "tsx src/scripts/progress.ts",
+    "record-launch": "tsx src/scripts/record-launch.ts"
   },
   "type": "module",
   "dependencies": {

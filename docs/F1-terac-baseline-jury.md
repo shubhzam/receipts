@@ -130,6 +130,17 @@ API contract (zod in `packages/shared`, error shape `{ error: { code, message } 
 
 Config additions: `PUBLIC_WEB_URL`, `TERAC_CALLBACK_URL` (default Terac's callback), `LLM_MODEL`, `JURY_VOTES_PER_CASE` (default 5).
 
+As built (2026-10-24), this supersedes the one-case-per-participant design above:
+
+- Design: 7 participants, 4 cases each, 28 votes. Rotation is a global Redis `INCRBY jury:rr:baseline-1 4` that returns the end slot, the participant gets slots end-3..end mod 10, so votes per case are 3 or 2 (d01 to d08 get 3, d09 and d10 get 2). `Study.casesPerParticipant` is 4 and `targetVotesPerCase` is 3 (the ceiling). Config keys `JURY_PARTICIPANTS` (7) and `JURY_CASES_PER_PARTICIPANT` (4) replace `JURY_VOTES_PER_CASE`.
+- Schema changes (migration `multi_case_assignments`): `Assignment.caseIds String[]` (ordered) replaces `caseId`, `Vote` is unique on `(assignmentId, caseId)` instead of `assignmentId`, `Study.casesPerParticipant Int`.
+- API contract changes: `POST /jury/assignments` returns `{ caseKeys, answeredCaseKeys, redirectUrl }`, same answer on repeat, `redirectUrl` is set only when every case is answered. `POST /jury/votes` takes `caseKey` and returns `{ answered, total, redirectUrl }` with 201 on first save and 200 on repeat, `redirectUrl` is null until the last case is voted. A case outside the assignment returns 409 `CASE_NOT_ASSIGNED`.
+- Terac opportunity `gza0yevon3thzw38womhw624` in project Receipts, launched 2026-10-24T18:24:23.971Z, ending 2026-10-29T18:19:03Z. Title "Judge 4 short payment disputes: 8-minute online task", task type `interview`, review type `auto_approve`, `duration_minutes` 8, `unrestricted_audience` (US, 18+), b2c, `customer_screening_review` auto_invite, one `boolean` screener question (bought or subscribed to a digital product online in the past 12 months, yes qualifies, no rejects), `max_responses_per_expert` 1.
+- Pricing (automatic estimate, no feasibility request): $6.00 per participant, $42.00 total, `funding.affordable` true against a $100.00 balance. The price was flat across duration: 5, 8, 12 and 16 minutes all priced $6.00 per participant, and the total is linear in participant count (50 gave $300.00, 6 gave $36.00, 4 gave $24.00). `activity` priced the same as `interview`, and `survey` cannot be created through the API.
+- Model: v0 replies were written with `claude-sonnet-5-5` (config `LLM_MODEL`).
+- Repeat participants: Terac has a `reference--has_not_taken_study` filter, so the after-study can exclude baseline participants with it.
+- Check progress with `pnpm --filter @receipts/api progress`. A participant who takes an assignment and leaves uses their slots, so per-case balance can skew by a vote.
+
 The ten cases (facts are templated in code, amounts integer cents):
 
 | key | reason | amount | merchant should win | key facts |
