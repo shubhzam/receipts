@@ -11,7 +11,9 @@
     "test": "vitest run",
     "seed": "tsx src/seed/seed.ts",
     "progress": "tsx src/scripts/progress.ts",
-    "record-launch": "tsx src/scripts/record-launch.ts"
+    "record-launch": "tsx src/scripts/record-launch.ts",
+    "seed:v1": "tsx src/seed/seed-v1.ts",
+    "export:v0-v1": "tsx src/scripts/export-v0-v1.ts"
   },
   "type": "module",
   "dependencies": {

@@ -8,12 +8,12 @@ import { generateReply } from "./replies.js";
 const REPLY_VERSION = "v0";
 const STUDY_KEY = "baseline-1";
 
-async function upsertCase(template: CaseTemplate): Promise<string> {
+export async function upsertCase(template: CaseTemplate): Promise<string> {
   const data = {
     reason: template.reason,
     amountCents: template.amountCents,
     claimText: template.claimText,
-    factsJson: { orderRef: template.orderRef, facts: template.facts },
+    factsJson: { orderRef: template.orderRef, facts: template.facts, proof: template.proof },
     merchantShouldWin: template.merchantShouldWin,
   };
   const row = await prisma.case.upsert({ where: { key: template.key }, create: { key: template.key, ...data }, update: data });
