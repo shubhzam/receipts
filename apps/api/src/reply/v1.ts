@@ -44,7 +44,7 @@ export function buildV1Prompt(input: V1Input, problems: string[] = []): string {
     `decision: ${input.decision}`,
     `write one reply of ${min} to ${max} words in plain prose, no headings, no bullet points.`,
     "the reply must name the dispute reason, the order reference and the amount.",
-    "write one sentence for each present or contradicting item, quoting its value exactly as written, with every number, id, email, date and timestamp written exactly as given and numbers as digits.",
+    "write one sentence for each present or contradicting item in your own words, without quotation marks, keeping every number, id, email, date, timestamp and name exactly as given and writing numbers as digits.",
     "if a policy was shown to the customer before purchase, state it.",
     "write like a person, not a report: never mention the item names, the status words in brackets or the word item.",
     closings[input.decision],

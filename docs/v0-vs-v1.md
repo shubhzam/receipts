@@ -21,9 +21,9 @@ We are contesting the dispute on order ORD-1101 for $39.00. The customer states 
 Sincerely,
 Customer Support Team
 
-### v1 (147 words)
+### v1 (132 words)
 
-I am writing in response to the dispute filed as Unauthorized purchase (fraud) on order ORD-1101 for $39.00, where the customer says they did not make this purchase and do not recognise the charge. Having reviewed our records, we believe the purchase was genuine, and I would like to walk you through what we found. The purchase email and account email are both alex.rivera@example.com, so the order and the account point to the same address. Afterwards, the records show 11 logins over 6 days from the purchase IP address and device, which looks like ordinary use by the person who bought it. The purchase IP address and cardholder are both in United States, so the location does not suggest someone else used the card. Taken together, these facts support that the buyer authorized this order. I respectfully ask that the dispute be resolved in the merchant's favor.
+I am writing in response to the dispute filed as an unauthorized purchase (fraud) on order ORD-1101 for $39.00. The customer says they did not make this purchase and do not recognise the charge, but the records we verified point the other way. The email address used at checkout and the email address on the customer's account are the same, alex.rivera@example.com. After the purchase, the account was used for 11 logins over 6 days, all from the same IP address and device that made the purchase. In addition, the purchase IP address and the cardholder are both located in United States. Taken together, these points indicate that this purchase was made by the account holder and not by someone else. I respectfully ask that this dispute be resolved in the merchant's favor.
 
 ## d02 - fraud, $89.00, ground truth: customer should win
 
@@ -46,7 +46,7 @@ Merchant Support
 
 ### v1 (120 words)
 
-Thank you for reviewing the dispute on order ORD-1102 for $89.00, filed as an unauthorized purchase (fraud). After checking our records, we are not contesting this dispute. The purchase was made with the email jordan.lec@example.com, which differs from the email on the account, jordan.lee@example.com. The purchase IP address is in Romania, while the cardholder is in United States. We also found no record of any logins on the account after the purchase, so nothing shows the account was used afterward. Because the evidence we have points toward the customer's claim rather than against it, we do not contest the dispute. We agree to refund the customer the full $89.00 for this order, and we hope this resolves the matter promptly.
+Thank you for reviewing the dispute on order ORD-1102 for $89.00, filed as an unauthorized purchase (fraud). The customer says they never made this purchase and that someone else used their card. After checking our records, we found details that fit that claim. The email address entered at purchase was jordan.lec@example.com, which is different from the email on the account, jordan.lee@example.com. The purchase also came from an IP address in Romania, while the cardholder is in United States. Because both of these details point away from the cardholder, and no logins were recorded on the account after the purchase, we do not contest this dispute. We accept the customer's claim and agree to refund the full $89.00 to the customer.
 
 ## d03 - not_received, $24.00, ground truth: merchant should win
 
@@ -72,9 +72,9 @@ Thank you for your time and review.
 Sincerely,
 The Merchant Support Team
 
-### v1 (125 words)
+### v1 (124 words)
 
-I am writing about the dispute on order ORD-1103 for $24.00, filed with the reason "Item not received", where the customer says they paid for a digital download and never received it. I disagree with that claim, and our records tell a different story. A delivery email to sam.patel@example.com was delivered at 2026-10-03T16:10Z. There were also 3 downloads logged within 10 minutes of purchase. Taken together, this shows the product was sent to the customer and that downloads were recorded right after the order, which does not fit with never receiving it. I have kept this reply to what our records actually show and have not added anything beyond that. Based on this, I respectfully ask that the dispute be resolved in the merchant's favor.
+I am writing about the dispute on order ORD-1103 for $24.00, filed with the reason that the purchase was not received. The customer says they paid for a digital download and never received it, but our records show otherwise. A delivery email to sam.patel@example.com was delivered at 2026-10-03T16:10Z. On top of that, the download activity shows 3 downloads logged within 10 minutes of purchase, which means the product was accessed right after the order. Based on these two facts, the download was delivered and accessed, and the order was fulfilled. I have not added anything beyond what our verified records show, and I am happy to answer any further questions you have. I respectfully ask that this dispute be resolved in the merchant's favor.
 
 ## d04 - not_received, $59.00, ground truth: customer should win
 
@@ -96,9 +96,9 @@ Because we did not successfully deliver what was purchased, we believe a refund 
 Sincerely,
 Customer Support
 
-### v1 (133 words)
+### v1 (134 words)
 
-Thank you for reviewing this case and for your time. The dispute is filed under the reason "Item not received" for order reference ORD-1104, in the amount of $59.00. The customer says they paid for a software license, never received it, and cannot use what they bought. Our records show that the delivery email to casey.nguyen@example.com bounced at 2026-10-05T09:30Z. That means our delivery did not get through to the customer. We also found no logged access or download events for this order. Because of this, we do not contest this dispute, as we cannot show the customer received what they paid for. We apologize for the trouble this caused. We agree to refund the customer the full $59.00 for order ORD-1104, and we are glad to see this resolved in the customer's favor.
+Hello, I am writing about the dispute on order ORD-1104 for $59.00, filed under the reason Item not received. The customer says they paid for a software license and never got it, so they cannot use what they bought. Our records support that: the email sending the license to casey.nguyen@example.com bounced at 2026-10-05T09:30Z. We also found no sign that anyone accessed or downloaded the product for this order. Since the only proof we have points to the license not arriving, and nothing shows otherwise, we do not contest this dispute. We would rather be straightforward than argue a case we cannot support. We agree to refund the customer the full $59.00. Thank you for taking the time to review this, and please let us know if you need anything else to close it out.
 
 ## d05 - not_as_described, $129.00, ground truth: merchant should win
 
@@ -120,9 +120,9 @@ The product delivered matches what was advertised at checkout. We are happy to r
 
 Thank you for your review.
 
-### v1 (135 words)
+### v1 (143 words)
 
-I am writing about the dispute on order ORD-1105 for $129.00, filed under the reason Not as described. I understand the customer says the course was not what the page described and that content they paid for was missing, and I would like to respond with what our records show. The checkout page listed 6 modules and 6 modules were delivered. The customer opened all 6 modules and completed 5. Given that, I cannot see how the course differed from what was advertised, and I have nothing in my records that shows otherwise. I have tried to keep this response limited to what I can verify, and I appreciate the time you are taking to review the case. Based on the facts above, I respectfully ask that this dispute be resolved in the merchant's favor.
+I am writing about the Not as described dispute on order ORD-1105 for $129.00. The customer says the course did not match the page and was missing content that was paid for, and I respectfully disagree with that claim. The checkout page listed 6 modules, and all 6 modules were delivered to the customer. After purchase, the customer opened all 6 modules and completed 5, which shows the course was accessible and was actually used. I also found no documentation of any difference between what the listing promised and what was delivered. Based on this, the product matched its description and the customer received what was purchased. Because the delivery matched the listing and the customer went through nearly the whole course, I do not believe this charge was made in error. I ask that the dispute be resolved in the merchant's favor.
 
 ## d06 - not_as_described, $49.00, ground truth: customer should win
 
@@ -143,9 +143,9 @@ Regarding order ORD-1106 for $49.00, we have reviewed our records and the custom
 Sincerely,
 The Merchant Support Team
 
-### v1 (113 words)
+### v1 (111 words)
 
-We are responding to the Not as described dispute on order ORD-1106 for $49.00. After reviewing our records, we do not contest this dispute. Our records show that the checkout page said works with v5 and v6 but v5 only was delivered. Our support records also show that 3 support emails confirm that only v5 was delivered. Because what the customer was shown at checkout does not match what we delivered, and our own support correspondence backs up the customer's account, we have no basis to dispute the claim. This is a straightforward case of the product not matching its description. We agree to refund the customer the full $49.00 for order ORD-1106.
+We are responding to the Not as described dispute on order ORD-1106 for $49.00. Our checkout page told customers the product works with v5 and v6, but v5 only was delivered. 3 support emails confirm that v5 only was delivered, which matches what the customer told you. Because our own page and our own support emails line up with the customer's claim, we do not contest this dispute. The product was not delivered as it was described at checkout, and we would rather be straightforward about that than argue the point. We are sorry for the confusion this caused. We agree to refund the customer the full $49.00 for order ORD-1106.
 
 ## d07 - subscription_canceled, $19.00, ground truth: merchant should win
 
@@ -170,9 +170,9 @@ We can provide the checkout policy screenshot, the charge timestamp, and the can
 Sincerely,
 The Merchant
 
-### v1 (145 words)
+### v1 (150 words)
 
-Hello, I am writing about the dispute for order ORD-1107, for $19.00, filed under the reason "Subscription canceled." The customer says, "I canceled my subscription but I was still charged this month," and I have reviewed our records carefully. Before buying, the customer was shown our terms, which read: "cancellation policy shown at checkout: cancellation applies from the next billing cycle." Our records also show the timing of events: "charge at 2026-10-12T14:03Z, cancel request at 2026-10-14T09:41Z, 2 days after the charge." In other words, the cancel request came after the $19.00 charge had already been made, so under the policy the customer saw, the cancellation applied to the following billing cycle and not to this charge. For these reasons, I believe the charge was valid and consistent with the terms presented at checkout. I respectfully ask that this dispute be resolved in the merchant's favor.
+I am writing about the dispute for order ORD-1107, a charge of $19.00, filed under the reason Subscription canceled. The customer says they canceled their subscription but were still charged this month, and I would like to lay out what our records show. At checkout, the customer was shown our cancellation policy, which states that cancellation applies from the next billing cycle. Our records show the charge was made at 2026-10-12T14:03Z, and the cancel request came in at 2026-10-14T09:41Z, which is 2 days after the charge. Because the request arrived after the payment had already been taken, and the policy the customer saw says cancellation takes effect from the next billing cycle, the $19.00 charge was made in line with those terms. I have tried to be accurate and have stated only what I can verify. I respectfully ask that this dispute be resolved in my favor as the merchant.
 
 ## d08 - subscription_canceled, $19.00, ground truth: customer should win
 
@@ -197,7 +197,7 @@ Merchant Support Team
 
 ### v1 (112 words)
 
-Regarding the dispute over "Subscription canceled" on order ORD-1108 for $19.00, I have reviewed our records and we do not contest this dispute. Our checkout showed the customer this: "cancellation policy shown at checkout: cancellation applies from the next billing cycle". However, our records also show "cancel request at 2026-10-14T11:25Z, 6 days before the charge at 2026-10-20T08:00Z". We also sent "cancellation confirmation email sent at 2026-10-14T11:26Z". Because the cancellation request came in before the charge and was confirmed to the customer by email, the customer's claim that they canceled before the renewal date is supported, and we cannot show the charge was valid. We agree to refund the customer $19.00 in full.
+We are reviewing the dispute for the reason Subscription canceled on order ORD-1108 for $19.00, and we do not contest it. Our cancellation policy was shown at checkout and said that cancellation applies from the next billing cycle. However, the customer's cancel request was received at 2026-10-14T11:25Z, which was 6 days before the charge at 2026-10-20T08:00Z. We also sent a cancellation confirmation email at 2026-10-14T11:26Z, which supports the customer's account that they canceled before renewal. Because the cancellation came before the charge and we confirmed it to the customer, we cannot show the charge was valid, so we are not contesting this dispute. We agree to refund the customer the full $19.00.
 
 ## d09 - duplicate, $15.00, ground truth: merchant should win
 
@@ -217,9 +217,9 @@ We have reviewed the customer's claim that they were charged twice on the same d
 Sincerely,
 Merchant Support
 
-### v1 (124 words)
+### v1 (120 words)
 
-I am writing about the Duplicate charge dispute on order reference ORD-1109 for $15.00, where the customer says, "I was charged twice on the same day for the same thing." I have reviewed the records and I do not believe this was a duplicate. Our records show two charges on 2026-10-09 with distinct order ids ORD-1109 and ORD-1119, so each charge belongs to its own separate order. They also show the orders are for two different products, Pixel Brush Pack and Icon Set Pro, so the customer did not receive the same thing twice. Taken together, these facts point to two separate purchases rather than one purchase billed twice. For these reasons, I respectfully ask that the dispute be resolved in the merchant's favor.
+Hello, I am writing about the dispute for order ORD-1109, a charge of $15.00, filed under the reason Duplicate charge. The customer says they were charged twice on the same day for the same thing, but our records show something different. There were indeed two charges on 2026-10-09, and each one carries its own order id, ORD-1109 and ORD-1119, so they are separate transactions rather than one purchase billed twice. The two orders were also for two different products, Pixel Brush Pack and Icon Set Pro, so this was not the same product bought twice. Based on this, the charge of $15.00 on ORD-1109 is not a duplicate. I respectfully ask that this dispute be resolved in the merchant's favor.
 
 ## d10 - credit_not_processed, $79.00, ground truth: merchant should win
 
@@ -239,6 +239,6 @@ The customer states that a refund was requested and never processed. Our records
 
 The product was delivered as described, and we have no record of a delivery failure or a technical problem reported within the refund period. Because the request fell outside the policy the customer agreed to, we believe the charge is valid. We can provide the checkout screenshot, the policy text, and the correspondence on request. We respectfully ask that the dispute be resolved in our favor.
 
-### v1 (148 words)
+### v1 (150 words)
 
-I am writing about the dispute filed for "Refund not processed" on order ORD-1110, in the amount of $79.00. The customer says, "I asked for a refund and it was never processed," so I want to lay out what our records show. Before buying, the customer saw our terms, since the record states "14-day refund policy was shown at checkout." The request came too late, because the record states "refund requested on day 31 (2026-09-12), after the 14-day window and was declined." That is why no refund has been issued: the decision followed the policy shown to the customer before purchase, and it was not a case of the request being ignored. I have limited this reply to what I can verify, and it shows the customer knew the terms and asked outside the stated window. I respectfully ask that this dispute be resolved in the merchant's favor.
+Hello, I am writing about the dispute on order ORD-1110 for $79.00, filed under the reason Refund not processed. The customer says they asked for a refund and it was never processed, and I want to explain what happened. Before buying, the customer was shown our 14-day refund policy at checkout, so the terms were stated up front. The refund request was made on day 31, which was 2026-09-12, after the 14-day window had ended, and it was declined. Because the request fell outside the policy window, no refund has been issued. I sell digital products, and the refund terms the customer saw at checkout are the terms I applied to this request. I have kept this reply to the facts I can verify, and I believe the policy was applied as it was presented to the customer. I respectfully ask that this dispute be resolved in the merchant's favor.
