@@ -9,6 +9,12 @@ const envSchema = z.object({
   WHOP_API_KEY: z.string().min(1),
   WHOP_BASE_URL: z.string().min(1),
   WHOP_API_VERSION_DATE: z.string().min(1),
+  // empty until the sandbox webhook exists, checkout and the webhook refuse to run while they are empty
+  WHOP_ACCOUNT_ID: z.string().default(""),
+  WHOP_WEBHOOK_SECRET: z.string().default(""),
+  DISPUTE_PACK_PRICE_CENTS: z.coerce.number().int().positive().default(2900),
+  PREVIEW_RATE_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(20),
+  REPLY_TARGET_WORDS: z.coerce.number().int().positive().default(120),
   TERAC_API_KEY: z.string().min(1),
   EXA_API_KEY: z.string().min(1),
   SOLARI_API_KEY: z.string().min(1),
@@ -28,6 +34,11 @@ export class Config {
   readonly whopApiKey: string;
   readonly whopBaseUrl: string;
   readonly whopApiVersionDate: string;
+  readonly whopAccountId: string;
+  readonly whopWebhookSecret: string;
+  readonly disputePackPriceCents: number;
+  readonly previewRateLimitPerHour: number;
+  readonly replyTargetWords: number;
   readonly teracApiKey: string;
   readonly exaApiKey: string;
   readonly solariApiKey: string;
@@ -46,6 +57,11 @@ export class Config {
     this.whopApiKey = env.WHOP_API_KEY;
     this.whopBaseUrl = env.WHOP_BASE_URL;
     this.whopApiVersionDate = env.WHOP_API_VERSION_DATE;
+    this.whopAccountId = env.WHOP_ACCOUNT_ID;
+    this.whopWebhookSecret = env.WHOP_WEBHOOK_SECRET;
+    this.disputePackPriceCents = env.DISPUTE_PACK_PRICE_CENTS;
+    this.previewRateLimitPerHour = env.PREVIEW_RATE_LIMIT_PER_HOUR;
+    this.replyTargetWords = env.REPLY_TARGET_WORDS;
     this.teracApiKey = env.TERAC_API_KEY;
     this.exaApiKey = env.EXA_API_KEY;
     this.solariApiKey = env.SOLARI_API_KEY;

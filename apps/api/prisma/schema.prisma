@@ -73,3 +73,32 @@ model Vote {
   @@unique([assignmentId, caseId])
   @@index([studyId, caseId])
 }
+
+model Order {
+  id              String       @id @default(uuid(7))
+  token           String       @unique
+  status          String
+  priceCents      Int
+  intake          Json
+  preview         Json
+  result          Json?
+  whopCheckoutId  String?
+  whopPurchaseUrl String?
+  whopPaymentId   String?      @unique
+  paidAt          DateTime?
+  fulfilledAt     DateTime?
+  createdAt       DateTime     @default(now())
+  events          AgentEvent[]
+}
+
+model AgentEvent {
+  id        String   @id @default(uuid(7))
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id])
+  step      String
+  reasoning String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([orderId, createdAt])
+}
